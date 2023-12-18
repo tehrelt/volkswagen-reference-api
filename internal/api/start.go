@@ -1,6 +1,10 @@
 package api
 
-import "database/sql"
+import (
+	"database/sql"
+
+	dbstore "github.com/tehrelt/volkswagen-reference-api/internal/repository/db"
+)
 
 func Start() error {
 
@@ -10,7 +14,8 @@ func Start() error {
 	}
 	defer db.Close()
 
-	
+	store := dbstore.New(db)
+
 	return nil
 }
 
