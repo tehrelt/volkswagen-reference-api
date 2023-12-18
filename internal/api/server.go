@@ -34,7 +34,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) configureRouter() {
-	
+	s.router.Use(middleware.CommonMiddleware)
 	s.router.Use(middleware.SetRequestId)
 	s.router.Use(middleware.LogMiddleware(s.logger))
 	s.router.Use(handlers.CORS(handlers.AllowedOrigins([]string{"*"})))
