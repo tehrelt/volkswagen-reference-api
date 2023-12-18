@@ -20,7 +20,7 @@ func (r *CarRepository) Find(model string) (*models.Car, error) {
 	car := &models.Car{}
 
 	if err := r.store.db.QueryRow(
-		"SELECT id, model, description FROM cars WHERE model = $1",
+		"SELECT id, model, description FROM car WHERE model = $1",
 		model,
 	).Scan(&car.ID, &car.Model, &car.Description); err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func (r *CarRepository) Find(model string) (*models.Car, error) {
 }
 
 func (r *CarRepository) Delete(id int) error {
-	stmt, err := r.store.db.Prepare("DELETE FROM cars WHERE id = ?")
+	stmt, err := r.store.db.Prepare("DELETE FROM car WHERE id = ?")
 	if err != nil {
 		return err
 	}
@@ -42,19 +42,31 @@ func (r *CarRepository) Delete(id int) error {
 	return nil
 }
 
-func (r *CarRepository) GetAll() ([]models.Car, error) {
-	var cars []models.Car
+func (r *CarRepository) GetAll() ([]models.CarDto, error) {
+	var cars []models.CarDto
 
-	rows, err := r.store.db.Query("SELECT id, model, description FROM cars")
+	rows, err := r.store.db.Query("SELECT id, model, description FROM car")
 	if err != nil {
 		return nil, err
 	}
 
 	var t models.Car
+	var dto models.CarDto
 	for rows.Next() {
 		rows.Scan(&t.ID, &t.Model, &t.Description)
 
-		cars = append(cars, t)
+		dto = models.CarDto{
+			ID:    t.ID,
+			Model: t.Model,
+		}
+
+		if t.Description.Valid {
+			dto.Description = t.Description.String
+		} else {
+			dto.Description = ""
+		}
+
+		cars = append(cars, dto)
 	}
 
 	return cars, nil
@@ -64,7 +76,7 @@ func (r *CarRepository) Get(id int) (*models.Car, error) {
 	car := &models.Car{}
 
 	if err := r.store.db.QueryRow(
-		"SELECT id, model, description FROM cars WHERE id = $1",
+		"SELECT id, model, description FROM car WHERE id = $1",
 		id,
 	).Scan(&car.ID, &car.Model, &car.Description); err != nil {
 		return nil, err

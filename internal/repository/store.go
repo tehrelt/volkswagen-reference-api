@@ -10,6 +10,6 @@ type CarRepository interface {
 	Create(car *models.Car) error
 	Find(modelName string) (*models.Car, error)
 	Delete(id int) error
-	GetAll() ([]models.Car, error)
+	GetAll() ([]models.CarDto, error)
 	Get(id int) (*models.Car, error)
 }

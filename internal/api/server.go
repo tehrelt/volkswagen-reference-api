@@ -44,6 +44,7 @@ func (s *server) configureRouter() {
 
 	car := s.router.PathPrefix("/cars").Subrouter()
 	car.HandleFunc("/", s.handleCreateCar()).Methods("POST")
+	car.HandleFunc("/", s.handleGetCars()).Methods("GET")
 }
 
 func (s *server) handleCreateCar() http.HandlerFunc {
@@ -77,6 +78,30 @@ func (s *server) handleCreateCar() http.HandlerFunc {
 		}
 
 		s.respond(w, r, http.StatusOK, c)
+	}
+}
+
+func (s *server) handleGetCars() http.HandlerFunc {
+	type response struct {
+		Data  []models.CarDto `json:"data"`
+		Count int             `json:"count"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		data, err := s.store.Car().GetAll()
+		if err != nil {
+			s.logger.Debug("unexpected error on getting all aliases", slog.Any("err", err))
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		re := response{
+			Data:  data,
+			Count: len(data),
+		}
+		s.logger.Debug("get a set of aliases", slog.Int("length", re.Count))
+		s.respond(w, r, http.StatusOK, re)
 	}
 }
 
