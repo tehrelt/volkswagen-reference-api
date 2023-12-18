@@ -2,21 +2,24 @@ package api
 
 import (
 	"database/sql"
+	"net/http"
 
+	_ "github.com/mattn/go-sqlite3"
 	dbstore "github.com/tehrelt/volkswagen-reference-api/internal/repository/db"
 )
 
 func Start() error {
 
-	db, err := setupDatabase("./storage.db")
+	db, err := setupDatabase("./.db")
 	if err != nil {
 		return err
 	}
 	defer db.Close()
 
 	store := dbstore.New(db)
+	srv := newServer(store)
 
-	return nil
+	return http.ListenAndServe(":4343", srv)
 }
 
 func setupDatabase(url string) (*sql.DB, error) {
