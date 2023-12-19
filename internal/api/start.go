@@ -34,7 +34,7 @@ func setupDatabase(url string) (*sql.DB, error) {
 			model text unique not null,
 			release_year integer not null,
 			description text,
-			image blob			
+			image text			
 		);
 		CREATE INDEX IF NOT EXISTS idx_model ON car(model);`,
 	)

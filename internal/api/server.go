@@ -1,11 +1,11 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -45,6 +45,9 @@ func (s *server) configureRouter() {
 	car := s.router.PathPrefix("/cars").Subrouter()
 	car.HandleFunc("/", s.handleCreateCar()).Methods("POST")
 	car.HandleFunc("/", s.handleGetCars()).Methods("GET")
+	car.HandleFunc("/{id:[0-9]+}", s.handleGetCar()).Methods("GET")
+	car.HandleFunc("/{id:[0-9]+}", s.handleDeleteCar()).Methods("DELETE")
+	// car.HandleFunc("/{id:[0-9]+}", s.handleUpdateCar()).Methods("UPDATE")
 }
 
 func (s *server) handleCreateCar() http.HandlerFunc {
@@ -52,6 +55,7 @@ func (s *server) handleCreateCar() http.HandlerFunc {
 		Model       string `json:"model"`
 		ReleaseYear int    `json:"release_year"`
 		Description string `json:"description,omitempty"`
+		ImageLink   string `json:"image_link,omitempty"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -63,12 +67,11 @@ func (s *server) handleCreateCar() http.HandlerFunc {
 			return
 		}
 
-		c := &models.Car{
+		c := &models.CarDto{
 			Model:       req.Model,
 			ReleaseYear: req.ReleaseYear,
-			Description: sql.NullString{
-				String: req.Description,
-			},
+			Description: req.Description,
+			ImageLink:   req.ImageLink,
 		}
 
 		if err := s.store.Car().Create(c); err != nil {
@@ -89,9 +92,11 @@ func (s *server) handleGetCars() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
+		query := r.URL.Query().Get("query")
+
 		data, err := s.store.Car().GetAll()
 		if err != nil {
-			s.logger.Debug("unexpected error on getting all aliases", slog.Any("err", err))
+			s.logger.Debug("unexpected error on getting all cars", slog.Any("err", err))
 			s.error(w, r, http.StatusInternalServerError, err)
 			return
 		}
@@ -100,8 +105,55 @@ func (s *server) handleGetCars() http.HandlerFunc {
 			Data:  data,
 			Count: len(data),
 		}
-		s.logger.Debug("get a set of aliases", slog.Int("length", re.Count))
+		s.logger.Debug("get a set of cars", slog.Int("length", re.Count), slog.String("query", query))
 		s.respond(w, r, http.StatusOK, re)
+	}
+}
+
+func (s *server) handleGetCar() http.HandlerFunc {
+	type response struct {
+		Data *models.CarDto `json:"data"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.Atoi(mux.Vars(r)["id"])
+		if err != nil {
+			s.logger.Debug("error when converting id", slog.String("value", (mux.Vars(r)["id"])))
+			return
+		}
+
+		data, err := s.store.Car().Get(id)
+		if err != nil {
+			s.logger.Debug("unexpected error on getting all aliases", slog.Any("err", err))
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		re := response{
+			Data: data,
+		}
+
+		s.logger.Debug("get a car", slog.String("model", re.Data.Model))
+		s.respond(w, r, http.StatusOK, re)
+	}
+}
+
+func (s *server) handleDeleteCar() http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.Atoi(mux.Vars(r)["id"])
+		if err != nil {
+			s.logger.Debug("error when converting id", slog.String("value", (mux.Vars(r)["id"])))
+			return
+		}
+
+		if err := s.store.Car().Delete(id); err != nil {
+			s.logger.Debug("unexpected error on getting all aliases", slog.Any("err", err))
+			s.error(w, r, http.StatusInternalServerError, err)
+			return
+		}
+
+		s.logger.Debug("successfully deleted a car", slog.Int("car_id", id))
+		s.respond(w, r, http.StatusOK, id)
 	}
 }
 

@@ -7,9 +7,9 @@ type Store interface {
 }
 
 type CarRepository interface {
-	Create(car *models.Car) error
-	Find(modelName string) (*models.Car, error)
+	Create(car *models.CarDto) error
+	Find(modelName string) (*models.CarDto, error)
 	Delete(id int) error
 	GetAll() ([]models.CarDto, error)
-	Get(id int) (*models.Car, error)
+	Get(id int) (*models.CarDto, error)
 }

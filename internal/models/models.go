@@ -7,6 +7,7 @@ type Car struct {
 	Model       string         `json:"model"`
 	ReleaseYear int            `json:"release_year"`
 	Description sql.NullString `json:"description"`
+	ImageLink   sql.NullString `json:"image_link"`
 }
 
 type CarDto struct {
@@ -14,4 +15,5 @@ type CarDto struct {
 	Model       string `json:"model"`
 	ReleaseYear int    `json:"release_year"`
 	Description string `json:"description"`
+	ImageLink   string `json:"image_link"`
 }
