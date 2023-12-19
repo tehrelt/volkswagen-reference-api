@@ -56,6 +56,7 @@ func (s *server) handleCreateCar() http.HandlerFunc {
 		ReleaseYear int    `json:"release_year"`
 		Description string `json:"description,omitempty"`
 		ImageLink   string `json:"image_link,omitempty"`
+		Bodywork    string `json:"bodywork"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -72,10 +73,11 @@ func (s *server) handleCreateCar() http.HandlerFunc {
 			ReleaseYear: req.ReleaseYear,
 			Description: req.Description,
 			ImageLink:   req.ImageLink,
+			Bodywork:    req.Bodywork,
 		}
 
 		if err := s.store.Car().Create(c); err != nil {
-			s.logger.Debug("cant create an alias", slog.Any("err", err))
+			s.logger.Debug("cant create an car", slog.Any("err", err))
 			s.error(w, r, http.StatusUnprocessableEntity, err)
 			return
 		}
@@ -85,9 +87,10 @@ func (s *server) handleCreateCar() http.HandlerFunc {
 }
 
 func (s *server) handleGetCars() http.HandlerFunc {
+
 	type response struct {
-		Data  []models.CarDto `json:"data"`
-		Count int             `json:"count"`
+		Data  []models.CarOverview `json:"data"`
+		Count int                  `json:"count"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {

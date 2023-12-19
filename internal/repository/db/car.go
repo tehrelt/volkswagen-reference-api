@@ -13,11 +13,12 @@ type CarRepository struct {
 func (r *CarRepository) Create(car *models.CarDto) error {
 	// log.Print(car);
 	return r.store.db.QueryRow(
-		"INSERT INTO car (model, release_year, description, image) VALUES ($1, $2, $3, $4) RETURNING id",
+		"INSERT INTO car (model, release_year, description, image, bodywork) VALUES ($1, $2, $3, $4, $5) RETURNING id",
 		car.Model,
 		car.ReleaseYear,
 		car.Description,
 		car.ImageLink,
+		car.Bodywork,
 	).Scan(&car.ID)
 }
 
@@ -54,28 +55,21 @@ func (r *CarRepository) Delete(id int) error {
 	return nil
 }
 
-func (r *CarRepository) GetAll() ([]models.CarDto, error) {
-	var cars []models.CarDto
+func (r *CarRepository) GetAll() ([]models.CarOverview, error) {
+	var cars []models.CarOverview
 
-	rows, err := r.store.db.Query("SELECT id, model, release_year, description, image FROM car")
+	rows, err := r.store.db.Query("SELECT id, model, image FROM car")
 	if err != nil {
 		return nil, err
 	}
 
-	var t models.Car
-	var dto models.CarDto
+	var t models.CarOverview
 	for rows.Next() {
-		rows.Scan(&t.ID, &t.Model, &t.ReleaseYear, &t.Description, &t.ImageLink)
+		rows.Scan(&t.Id, &t.Model, &t.Thumb)
 
-		dto = models.CarDto{
-			ID:          t.ID,
-			ReleaseYear: t.ReleaseYear,
-			Model:       t.Model,
-			Description: t.Description.String,
-			ImageLink:   t.ImageLink.String,
-		}
-
-		cars = append(cars, dto)
+		log.Print(t)
+		
+		cars = append(cars, t)
 	}
 
 	return cars, nil
@@ -85,13 +79,13 @@ func (r *CarRepository) Get(id int) (*models.CarDto, error) {
 	car := &models.Car{}
 
 	if err := r.store.db.QueryRow(
-		"SELECT id, model, release_year, description, image FROM car WHERE id = $1",
+		"SELECT id, model, release_year, description, image, bodywork FROM car WHERE id = $1",
 		id,
-	).Scan(&car.ID, &car.Model, &car.ReleaseYear, &car.Description, &car.ImageLink); err != nil {
+	).Scan(&car.ID, &car.Model, &car.ReleaseYear, &car.Description, &car.ImageLink, &car.Bodywork); err != nil {
 		return nil, err
 	}
 
-	log.Print(car)
+	// log.Print(car)
 
 	dto := &models.CarDto{
 		ID:          car.ID,
@@ -99,6 +93,7 @@ func (r *CarRepository) Get(id int) (*models.CarDto, error) {
 		ReleaseYear: car.ReleaseYear,
 		Description: car.Description.String,
 		ImageLink:   car.ImageLink.String,
+		Bodywork:    car.Bodywork,
 	}
 
 	return dto, nil
